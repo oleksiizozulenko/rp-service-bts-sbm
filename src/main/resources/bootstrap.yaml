@@ -1,0 +1,17 @@
+info:
+  build:
+    name: SBM Bugtracking Service
+    description: ReportPortal SBM Integration
+    version: '@version@'
+    branch: '@branch@'
+
+spring:
+  application:
+    name: sbm
+  profiles:
+    # Default one is still Eureka
+    active: ${rp.profiles:eureka}
+security:
+  sessions: stateless
+  basic:
+    enabled: false

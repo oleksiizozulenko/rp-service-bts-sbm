@@ -1,0 +1,89 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.2.RELEASE")
+        classpath 'com.bmuschko:gradle-docker-plugin:3.0.5'
+
+    }
+}
+
+plugins {
+    id "io.spring.dependency-management" version "0.6.0.RELEASE"
+    id 'net.researchgate.release' version '2.4.1'
+    id "com.jfrog.bintray" version "1.7"
+}
+
+
+apply plugin: 'java'
+apply plugin: "org.springframework.boot"
+apply from: 'build-quality.gradle'
+apply from: 'https://raw.githubusercontent.com/reportportal/gradle-scripts/master/build-docker.gradle'
+apply from: 'https://raw.githubusercontent.com/reportportal/gradle-scripts/master/build-info.gradle'
+apply from: 'https://raw.githubusercontent.com/reportportal/gradle-scripts/master/release-service.gradle'
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-starter-parent:Camden.SR5"
+        mavenBom "org.springframework.boot:spring-boot-dependencies:1.5.2.RELEASE"
+    }
+}
+
+project.ext {
+    releaseMode = project.hasProperty("releaseMode")
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://m2proxy.atlassian.com/repository/public" }
+    maven { url "http://dl.bintray.com/epam/reportportal" }
+
+    if (!releaseMode) {
+        maven { url 'https://jitpack.io' }
+    }
+
+
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+description = 'Report portal. SBM Integration'
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.0'
+}
+
+dependencies {
+    if (releaseMode) {
+        compile 'com.epam.reportportal:commons-bugtracking:3.0.0-BETA-2'
+    } else {
+        compile('com.github.reportportal:commons-bugtracking:04ea0d9ed1')
+    }
+
+    compile 'org.jasypt:jasypt:1.9.2'
+
+    compile group: 'org.apache.axis', name: 'axis', version: '1.4'
+    compile group: 'axis', name: 'axis-jaxrpc', version: '1.4'
+
+    compile('com.atlassian.jira:jira-rest-java-client-core:4.0.0')
+    compile('com.atlassian.fugue:fugue:2.6.1')
+
+    compile 'net.oauth.core:oauth:20090617'
+    compile 'net.oauth.core:oauth-httpclient4:20090913'
+
+    compile 'org.apache.tika:tika-core:1.14'
+
+    testCompile 'org.hamcrest:hamcrest-all:1.3'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-all:2.0.2-beta'
+}
+
+processResources {
+    filesMatching('**/bootstrap.yaml') {
+        filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [version: project.property("version")])
+    }
+}
